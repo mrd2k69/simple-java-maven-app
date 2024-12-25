@@ -21,9 +21,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y libxml2-utils
-
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -34,26 +31,27 @@ jobs:
     - name: Update version (increase patch)
       id: update_version
       run: |
-        # Extract current version
-        current_version=$(xmllint --xpath "string(//project/version)" pom.xml)
-        IFS='.' read -ra VERSION_PARTS <<< "$current_version"
-        major=${VERSION_PARTS[0]}
-        minor=${VERSION_PARTS[1]}
-        patch=${VERSION_PARTS[2]%-SNAPSHOT}
-        
-        # Increase patch version
-        new_patch=$((patch + 1))
-        new_version="$major.$minor.$new_patch-SNAPSHOT"
-        
-        # Update version in pom.xml
-        xmllint --shell pom.xml <<EOF
-          cd /project/version
-          set $new_version
-          save pom.xml
-          exit
+        python - <<EOF
+        import xml.etree.ElementTree as ET
+
+        tree = ET.parse('pom.xml')
+        root = tree.getroot()
+        version = root.find("{http://maven.apache.org/POM/4.0.0}version").text
+
+        # Parse version
+        major, minor, patch = map(int, version.replace("-SNAPSHOT", "").split('.'))
+        patch += 1
+        new_version = f"{major}.{minor}.{patch}-SNAPSHOT"
+
+        # Update version
+        root.find("{http://maven.apache.org/POM/4.0.0}version").text = new_version
+        tree.write('pom.xml', xml_declaration=True, encoding="utf-8")
+
+        print(f"Updated version to {new_version}")
         EOF
 
-        echo "Updated version to $new_version"
+        # Output the new version
+        new_version=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('pom.xml'); root = tree.getroot(); print(root.find('{http://maven.apache.org/POM/4.0.0}version').text)")
         echo "new_version=$new_version" >> $GITHUB_ENV
 
     - name: Commit and push new version
