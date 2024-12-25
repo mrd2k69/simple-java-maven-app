@@ -35,13 +35,21 @@ jobs:
         file: 'pom.xml'
         version: 'patch'  # מגדיל את ה-patch version בגרסה
 
+    - name: Verify version update
+      run: |
+        cat pom.xml
+        git diff --exit-code pom.xml || echo "Changes detected in pom.xml"
+
     - name: Commit and push new version
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add pom.xml
-        git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}"
-        git push
+
+        # בודק אם יש שינויים ב-pom.xml
+        git diff --exit-code pom.xml || git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}"
+
+        # אם יש שינויים, מבצע push
+        git push origin HEAD
 
     - name: Build JAR with Maven
       run: mvn -B package --file pom.xml
