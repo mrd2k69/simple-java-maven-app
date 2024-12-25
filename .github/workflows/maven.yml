@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Java CI with Maven
+name: CI/CD for Java App
 
 on:
   push:
@@ -16,26 +16,63 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - name: Build with Maven
+
+    - name: Update version (increase patch)
+      id: update_version
+      run: |
+        # Extract current version
+        current_version=$(xmllint --xpath "string(//project/version)" pom.xml)
+        IFS='.' read -ra VERSION_PARTS <<< "$current_version"
+        major=${VERSION_PARTS[0]}
+        minor=${VERSION_PARTS[1]}
+        patch=${VERSION_PARTS[2]%-SNAPSHOT}
+        
+        # Increase patch version
+        new_patch=$((patch + 1))
+        new_version="$major.$minor.$new_patch-SNAPSHOT"
+        
+        # Update version in pom.xml
+        xmllint --shell pom.xml <<EOF
+          cd /project/version
+          set $new_version
+          save pom.xml
+          exit
+        EOF
+
+        echo "Updated version to $new_version"
+        echo "new_version=$new_version" >> $GITHUB_ENV
+
+    - name: Commit and push new version
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add pom.xml
+        git commit -m "Update version to ${{ env.new_version }}"
+        git push origin HEAD
+
+    - name: Build JAR with Maven
       run: mvn -B package --file pom.xml
 
-    - name: Build and push
+    - name: Build and push Docker image
       uses: docker/build-push-action@v6
       with:
-        image: mrd2k69/simple-java-maven-app
+        context: .
+        file: Dockerfile
+        push: true
+        tags: |
+          mrd2k69/simple-java-maven-app:${{ env.new_version }}
+          mrd2k69/simple-java-maven-app:latest
         registry: docker.io
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    
