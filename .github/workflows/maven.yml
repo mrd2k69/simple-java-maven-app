@@ -64,7 +64,7 @@ jobs:
         # file: Dockerfile
         push: true
         tags: |
-          mrd2k69/simple-java-maven-app:${{ steps.bump.outputs.new_version }}
+          mrd2k69/simple-java-maven-app:1.0.0
           mrd2k69/simple-java-maven-app:latest
           
     # - name: Build and push Docker image
