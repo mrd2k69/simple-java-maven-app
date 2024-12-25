@@ -28,12 +28,9 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Bump version (increase patch)
-      id: bump
-      uses: mickem/gh-action-bump-maven-version@v1.0.0
-      with:
-        file: 'pom.xml'
-        version: 'patch'  # מגדיל את ה-patch version בגרסה
+    - name: Update version using mvn release:update-versions
+      run: |
+        mvn release:update-versions -DautoVersionSubmodules=true # עדכון גרסה כולל תתי מודולים
 
     - name: Verify version update
       run: |
@@ -44,9 +41,9 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-        # בודק אם יש שינויים ב-pom.xml
-        git diff --exit-code pom.xml || git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}"
+        
+        # אם יש שינויים ב-pom.xml, מבצע commit
+        git diff --exit-code pom.xml || git commit -am "Update Version"
 
         # אם יש שינויים, מבצע push
         git push origin HEAD
