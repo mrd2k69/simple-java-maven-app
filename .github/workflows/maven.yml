@@ -28,50 +28,19 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Update version (increase patch)
-      id: update_version
-      run: |
-        python - <<EOF
-        import xml.etree.ElementTree as ET
-
-        # Parse the XML file
-        tree = ET.parse('pom.xml')
-        root = tree.getroot()
-
-        # Find the version element (with the correct namespace)
-        namespace = "{http://maven.apache.org/POM/4.0.0}"
-        version_element = root.find(f"{namespace}version")
-
-        if version_element is not None:
-            # Get the current version
-            version = version_element.text
-
-            # Parse the version number and increment the patch version
-            major, minor, patch = map(int, version.split('.'))
-            patch += 1
-            new_version = f"{major}.{minor}.{patch}"
-
-            # Update the version element
-            version_element.text = new_version
-
-            # Write the updated XML back to the file without changing the namespace
-            tree.write('pom.xml', xml_declaration=True, encoding="utf-8")
-
-            print(f"Updated version to {new_version}")
-        else:
-            print("Version element not found in pom.xml")
-        EOF
-
-        # Output the new version
-        new_version=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('pom.xml'); root = tree.getroot(); print(root.find('{http://maven.apache.org/POM/4.0.0}version').text)")
-        echo "new_version=$new_version" >> $GITHUB_ENV
+    - name: Bump version (increase patch)
+      id: bump
+      uses: mickem/gh-action-bump-maven-version@v1.0.0
+      with:
+        file: 'pom.xml'
+        version: 'patch'  # מגדיל את ה-patch version בגרסה
 
     - name: Commit and push new version
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add pom.xml
-        git commit -m "Update version to ${{ env.new_version }}"
+        git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}"
         git push origin HEAD
 
     - name: Build JAR with Maven
@@ -84,7 +53,7 @@ jobs:
         file: Dockerfile
         push: true
         tags: |
-          mrd2k69/simple-java-maven-app:${{ env.new_version }}
+          mrd2k69/simple-java-maven-app:${{ steps.bump.outputs.new_version }}
           mrd2k69/simple-java-maven-app:latest
         registry: docker.io
         username: ${{ secrets.DOCKERHUB_USERNAME }}
