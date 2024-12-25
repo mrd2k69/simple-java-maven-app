@@ -42,11 +42,11 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # אם יש שינויים ב-pom.xml, מבצע commit
+        # commit if there are changes in pom.xml
         git diff --exit-code pom.xml || git commit -am "Update Version"
 
-        # אם יש שינויים, מבצע push
-        git push origin HEAD
+        # push after changes
+        git push
 
     - name: Build JAR with Maven
       run: mvn -B package --file pom.xml
@@ -61,5 +61,8 @@ jobs:
           mrd2k69/simple-java-maven-app:${{ steps.bump.outputs.new_version }}
           mrd2k69/simple-java-maven-app:latest
         registry: docker.io
+        load: false
+        no-cache: false
+        pull: false
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
