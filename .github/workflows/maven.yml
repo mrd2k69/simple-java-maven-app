@@ -34,20 +34,32 @@ jobs:
         python - <<EOF
         import xml.etree.ElementTree as ET
 
+        # Parse the XML file
         tree = ET.parse('pom.xml')
         root = tree.getroot()
-        version = root.find("{http://maven.apache.org/POM/4.0.0}version").text
 
-        # Parse version
-        major, minor, patch = map(int, version.split('.'))
-        patch += 1
-        new_version = f"{major}.{minor}.{patch}"
+        # Find the version element (with the correct namespace)
+        namespace = "{http://maven.apache.org/POM/4.0.0}"
+        version_element = root.find(f"{namespace}version")
 
-        # Update version
-        root.find("{http://maven.apache.org/POM/4.0.0}version").text = new_version
-        tree.write('pom.xml', xml_declaration=True, encoding="utf-8")
+        if version_element is not None:
+            # Get the current version
+            version = version_element.text
 
-        print(f"Updated version to {new_version}")
+            # Parse the version number and increment the patch version
+            major, minor, patch = map(int, version.split('.'))
+            patch += 1
+            new_version = f"{major}.{minor}.{patch}"
+
+            # Update the version element
+            version_element.text = new_version
+
+            # Write the updated XML back to the file without changing the namespace
+            tree.write('pom.xml', xml_declaration=True, encoding="utf-8")
+
+            print(f"Updated version to {new_version}")
+        else:
+            print("Version element not found in pom.xml")
         EOF
 
         # Output the new version
