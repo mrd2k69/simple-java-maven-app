@@ -39,9 +39,9 @@ jobs:
         version = root.find("{http://maven.apache.org/POM/4.0.0}version").text
 
         # Parse version
-        major, minor, patch = map(int, version.replace("-SNAPSHOT", "").split('.'))
+        major, minor, patch = map(int, version.split('.'))
         patch += 1
-        new_version = f"{major}.{minor}.{patch}-SNAPSHOT"
+        new_version = f"{major}.{minor}.{patch}"
 
         # Update version
         root.find("{http://maven.apache.org/POM/4.0.0}version").text = new_version
@@ -77,4 +77,3 @@ jobs:
         registry: docker.io
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
