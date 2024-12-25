@@ -58,11 +58,8 @@ jobs:
         file: Dockerfile
         push: true
         tags: |
-          mrd2k69/simple-java-maven-app:${{ github.sha }}  #mrd2k69/simple-java-maven-app:${{ steps.bump.outputs.new_version }}
+          mrd2k69/simple-java-maven-app:${{ steps.bump.outputs.new_version }}
           mrd2k69/simple-java-maven-app:latest
         registry: docker.io
-        load: false
-        no-cache: false
-        pull: false
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
