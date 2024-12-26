@@ -77,24 +77,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # - name: connect and pull
-    #   run: ssh -i ${{ secrets.SSH_PRIVATE_KEY }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
-    #       sudo docker run mrd2k69/simple-java-maven-app:latest
-    #     EOF
-
-    
-    
     - name: Deploy container on EC2 host
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}          
-    
+        key: ${{ secrets.SSH_PRIVATE_KEY }}              
         script: |
           sudo docker run mrd2k69/simple-java-maven-app:latest
-          # docker pull ${{ env.DOCKER_IMAGE }}
-          # docker stop my-app
-          # docker rm my-app
-          # docker run --name my-app --restart always ${{ env.DOCKER_IMAGE }}
-          
+         
