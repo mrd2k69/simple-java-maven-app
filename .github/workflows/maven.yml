@@ -70,4 +70,13 @@ jobs:
         tags: |
           mrd2k69/simple-java-maven-app:${{ env.VERSION }}
           mrd2k69/simple-java-maven-app:latest
-  
+
+  deploy:
+    needs: build
+    name: deploy image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: connect and pull
+      run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo docker run mrd2k69/simple-java-maven-app:latest && exit"
+    
